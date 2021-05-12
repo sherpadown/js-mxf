@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og: https://ogp.me/ns#">
+    <head>
+        <meta charset="utf-8">
+    </head>
+<body>
+
+<script>
+// https://stackoverflow.com/questions/40031688/javascript-arraybuffer-to-hex/50767210#50767210
+function to_hex(buffer) {
+    return [...new Uint8Array (buffer)]
+        .map (b => b.toString (16).padStart (2, "0"))
+        .join ("");
+}
+function to_dec(buffer) {
+    return parseInt(buffer, 16);
+}
+function getUUID(buffer) {
+    return to_hex(
+        buffer
+    ).toUpperCase();
+}
+function getSize(buffer) {
+    /*
+    The length field is always coded MSB (most significant byte) first
+    40h                          short form coded
+    83.00.00.40                  long form coding using 4 bytes overall
+    87.00.00.00.00.00.00.40      long form coding using 8 bytes overall
+    */
+    ber_code = buffer.slice(0, 1); 
+    ber_value = buffer.slice(1, 4);
+    size = to_dec(to_hex(ber_value));
+    return size;
+}
+
+function dropHandler(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+
+    var files = evt.dataTransfer.files;
+    var file = files[0];
+
+    var offset = 0;
+    var size_header = 20;
+
+    var readEventHandler = function(event) {
+        _uuid = getUUID(event.target.result.slice(0, 16));
+        _size = getSize(event.target.result.slice(16, 20));
+        offset += size_header + _size;
+
+        console.log(_uuid, offset, _size, event.target.result.slice(size_header, size_header+_size));
+
+        // EOF
+        if (!_uuid) {
+            console.log("EOF");
+            return;
+        }
+        setTimeout(function() {
+            //readChunk(file, offset, size_header);
+            readChunk(file, offset, _size);
+        }, 10); // avoid cpu flood on small chunk size
+    }
+
+
+    function readChunk(fileHandler, offset, size) {
+        var reader = new FileReader();
+        console.log("READ=", size);
+        var chunk = fileHandler.slice(offset, offset + size);
+        reader.onload = readEventHandler;
+        reader.readAsArrayBuffer(chunk);
+    }
+
+    // Read the first KLV
+    readChunk(file, offset, size_header);
+
+    /*
+    fileReader.onloadstart = function(progressEvent) {
+        console.log("OnloadStart - Handler: " + progressEvent);
+        console.log("OnLoadStart - File: " + file.name + file.size + file.type);
+    }
+    fileReader.onprogress = function(progressEvent) {
+        console.log("OnProgress - Handler: " + progressEvent);
+    }
+    fileReader.onload = function(progressEvent) {
+        console.log("OnLoad - Handler: " + progressEvent);
+        console.log("** OnLoad - Result: " + fileReader.result);
+    }
+    fileReader.onloadend = function(progressEvent) {
+        console.log("OnLoadEnd - Handler: " + progressEvent);
+        console.log("OnLoadEnd - State: " + fileReader.readyState);
+    }
+    fileReader.onerror = function(progressEvent) {
+        console.log("OnError - Handler:" + progressEvent);
+    }
+    fileReader.onabort = function(progressEvent) {
+        console.log("OnAbort - Handler:" + progressEvent);
+    }
+    // fileReader.readAsArrayBuffer(file);
+    fileReader.readAsArrayBuffer(partial);
+   */
+
+}
+function dragoverHandler(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+    // Explicitly show this is a copy.
+    evt.dataTransfer.dropEffect = 'copy';
+}
+</script>
+
+<style>
+#drop-area {
+    border: 1px solid blue;
+    padding: 15px;
+    margin-top:5px;
+}
+</style>
+
+<div id="drop-area" ondragover="dragoverHandler(event)" ondrop="dropHandler(event)">
+    Drop one file here
+</div>
+
+</body>
+</html>
