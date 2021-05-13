@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html lang="en-US" prefix="og: https://ogp.me/ns#">
     <head>
-        <meta charset="utf-8">
+        <meta charset="utf-8"/>
+        <title>MXF Reader</title>
     </head>
 <body>
 
 <script>
-// https://stackoverflow.com/questions/40031688/javascript-arraybuffer-to-hex/50767210#50767210
+var elements_number = 0;
+
 function to_hex(buffer) {
+    /* 
+        https://stackoverflow.com/questions/40031688/javascript-arraybuffer-to-hex/50767210#50767210
+    */
     return [...new Uint8Array (buffer)]
         .map (b => b.toString (16).padStart (2, "0"))
         .join ("");
@@ -18,14 +23,14 @@ function to_dec(buffer) {
 function getUUID(buffer) {
     return to_hex(
         buffer
-    ).toUpperCase();
+    ).toLowerCase();
 }
 function getSize(buffer) {
     /*
-    The length field is always coded MSB (most significant byte) first
-    40h                          short form coded
-    83.00.00.40                  long form coding using 4 bytes overall
-    87.00.00.00.00.00.00.40      long form coding using 8 bytes overall
+        The length field is always coded MSB (most significant byte) first
+        40h                          short form coded
+        83.00.00.40                  long form coding using 4 bytes overall
+        87.00.00.00.00.00.00.40      long form coding using 8 bytes overall
     */
     ber_code = buffer.slice(0, 1); 
     ber_value = buffer.slice(1, 4);
@@ -33,82 +38,203 @@ function getSize(buffer) {
     return size;
 }
 
-function dropHandler(evt) {
-    evt.stopPropagation();
-    evt.preventDefault();
+document.addEventListener('interface', function (event) {
+    if ( event.detail.action == "reset" ) {
+        elements_number = 0;
+        document.getElementById("elements").innerHTML = "0 elements found";
+        document.getElementById("canvas").innerHTML = null;
+    } else {
+        // Create a new div for new element
+        var div = document.createElement("div");
+        div.setAttribute("id", "element_" + elements_number);
+        div.setAttribute("class", "uuid_" + event.detail.uuid);
+        var content = document.createTextNode(event.detail.uuid + " - " + event.detail.size);
+        div.appendChild(content);
+        // Update canvas
+        var canvas = document.getElementById("canvas");
+        canvas.appendChild(div);
+        // Update elements number
+        document.getElementById("elements").innerHTML = (++elements_number) + " elements found";
+    }
+}, false);
 
-    var files = evt.dataTransfer.files;
+
+function onDropHandler(event) {
+
+    event.stopPropagation();
+    event.preventDefault();
+
+    // Update interface
+    document.dispatchEvent(
+        new CustomEvent("interface", { detail: { "action": "reset" } })
+    );
+
+    var files = event.dataTransfer.files;
     var file = files[0];
-
-    var loop = 0;
 
     var offset = 0;
     var size = 20;
 
-    var data_offset = 0;
-    var data_size = 0;
 
-    var readEventHandlerData = function(event) {
-        console.log(klv_uuid, "data=", event.target.result.byteLength);
+    var readDataHandler = function(event) {
+        uuid = getUUID(event.target.result.slice(0, 16));
+        console.log(uuid, "size=", event.target.result.byteLength);
     }
 
-    var readEventHandler = function(event) {
-        klv_uuid = getUUID(event.target.result.slice(0, 16));
-        klv_size = getSize(event.target.result.slice(16, 20));
+    var readHeaderHandler = function(event) {
+        uuid = getUUID(event.target.result.slice(0, 16));
+        size = getSize(event.target.result.slice(16, 20));
         
-        console.log(klv_uuid, "offset=", offset, "klv_size=", klv_size, "size=", klv_size+20);
-        readChunkData(file, offset, klv_size+20);
 
-        if (!klv_uuid) {
-            console.log("stop");
+        if (!uuid) {
+            console.log("EOF");
             return;
         }
-        
-        size = klv_size;
-        offset += (20 + klv_size);
 
-        readChunk(file, offset, size);
+        console.log(uuid, "offset=", offset, "size=", size, "fsize=", size+20);
+
+        // Update interface
+        document.dispatchEvent(
+            new CustomEvent("interface", { detail: { "action": "update", "uuid": uuid, "size": size } })
+        );
+
+
+        // Read Data from KLV
+        readData(file, offset, size);
+        
+        // Read the next KLV
+        offset += (size+20);
+        readHeader(file, offset);
     }
 
 
-    function readChunk(fileHandler, offset, size) {
+    function readHeader(fileHandler, offset) {
         var reader = new FileReader();
-        var chunk = fileHandler.slice(offset, offset + size);
-        reader.onload = readEventHandler;
+        var chunk = fileHandler.slice(offset, offset + 20);
+        reader.onload = readHeaderHandler;
         reader.readAsArrayBuffer(chunk);
     }
-    function readChunkData(fileHandler, _offset, _size) {
+    function readData(fileHandler, offset, size) {
         var reader = new FileReader();
-        var chunk = fileHandler.slice(_offset, _offset + _size);
-        data_offset = _offset;
-        data_size = _size;
-        reader.onload = readEventHandlerData;
+        var chunk = fileHandler.slice(offset, offset + size);
+        reader.onload = readDataHandler;
         reader.readAsArrayBuffer(chunk);
     }
 
     // Read the first KLV
-    readChunk(file, offset, size);
-
+    readHeader(file, 0);
 }
 
-function dragoverHandler(evt) {
-    evt.stopPropagation();
-    evt.preventDefault();
-    evt.dataTransfer.dropEffect = 'copy';
+function onDragOverHandler(event) {
+    event.stopPropagation();
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
 }
 </script>
 
 <style>
 #drop {
-    border:1px solid blue;
     height:50px;
-    width:100%;
+    padding:5px;
+    font-family: Courier;
+    background-color:rgba(106, 90, 205, 0.5);
+    border:1px solid rgba(106, 90, 205, 1);
+}
+#canvas {
+    font-family: Courier;
+    padding:5px;
+}
+
+/* --------- JPEG2000 MXF ----------- */
+#canvas div.uuid_060e2b34010201010d01030115010801 { color:green; }
+#canvas div.uuid_060e2b34010201010d01030115010801:after { content:" - Picture Essence - JPEG2000 (LineWrapped, NotClipWrapped)"; }
+#canvas div.uuid_060e2b34020401070d010301027e0100 { color:green; }
+#canvas div.uuid_060e2b34020401070d010301027e0100:after { content:" - Encrypted Essence - Picture - JPEG2000" }
+#canvas div.uuid_060e2b34020401010d010301027e0100 { color:green; }
+#canvas div.uuid_060e2b34020401010d010301027e0100:after { content:" - Encrypted Essence" }
+#canvas div.uuid_060e2b34025301010d01010101015a00:after { content:" - PictureSubDescriptor - JPEG2000" }
+#canvas div.uuid_060e2b34025301010d01040102010000:after { content:" - Cryptographic Framework Key" }
+#canvas div.uuid_060e2b34025301010d01040102020000:after { content:" - Cryptographic Context Key" }
+/* ---------- MXF --------- */
+#canvas div.uuid_060e2b34020501010d01020101020400:after { content:" - Partition Pack - Header" }
+#canvas div.uuid_060e2b34020501010d01020101050100:after { content:" - Primer Pack" }
+#canvas div.uuid_060e2b34025301010d01010101012f00:after { content:" - Preface"}
+#canvas div.uuid_060e2b34025301010d01010101013000:after { content:" - Identification"}
+#canvas div.uuid_060e2b34025301010d01010101011800:after { content:" - Content Storage"}
+#canvas div.uuid_060e2b34025301010d01010101012300:after { content:" - Essence Container Data"}
+#canvas div.uuid_060e2b34025301010d01010101013600:after { content:" - Material Package"}
+#canvas div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#canvas div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#canvas div.uuid_060e2b34025301010d01010101011400:after { content:" - Timecode Component"}
+#canvas div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#canvas div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#canvas div.uuid_060e2b34025301010d01010101011100:after { content:" - Source Clip"}
+#canvas div.uuid_060e2b34025301010d01010101013700:after { content:" - Source Package"}
+#canvas div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#canvas div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#canvas div.uuid_060e2b34025301010d01010101011400:after { content:" - Timecode Component"}
+#canvas div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#canvas div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#canvas div.uuid_060e2b34025301010d01010101011100:after { content:" - Source Clip"}
+#canvas div.uuid_060e2b34025301010d01010101012900:after { content:" - RGBA Essence Descriptor" }
+#canvas div.uuid_060e2b34025301010d01010101013a00:after { content:" - Static Track"}
+#canvas div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#canvas div.uuid_060e2b34025301010d01010101014100:after { content:" - DM Segment"}
+#canvas div.uuid_060e2b34010101020301021001000000:after { content:" - KLV Fill item"}
+#canvas div.uuid_060e2b34010101010301021001000000:after { content:" - KLV Fill item"}
+#canvas div.uuid_060e2b34020501010d01020101030400:after { content:" - Partition Pack - Body"}
+/* MXF Subtitles */
+#canvas div.uuid_060e2b340101010c0d01050901000000:after { content:" - Generic Stream Data Element - PNG"}
+#canvas div.uuid_060e2b34020501010d01020101031100:after { content:" - Partition Pack - Body - Generic Stream Partition"}
+#canvas div.uuid_060e2b34010201010d01030117010b01:after { content:" - Data Essence - XML"}
+#canvas div.uuid_060e2b34025301010d01010101016400:after { content:" - TimedTextDescriptor"}
+#canvas div.uuid_060e2b34025301010d01010101016500:after { content:" - TimedTextResourceSubDescriptor"}
+#canvas div.uuid_060e2b34025301010d01010101016500:after { content:" - TimedTextResourceSubDescriptor"}
+#canvas div.uuid_060e2b34010201090d01030117010b01 { color:green; }
+#canvas div.uuid_060e2b34010201090d01030117010b01:after { content:" - Timed Text Essence" }
+/* Sound */
+#canvas div.uuid_060e2b34025301010d01010101014800:after { content:" - WaveAudioDescriptor **" }
+#canvas div.uuid_060e2b34025301010d01010101016c00:after { content:" - SoundfieldGroupLabelSubDescriptor" }
+#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#canvas div.uuid_060e2b34010201010d01030116010101 { color:green; }
+#canvas div.uuid_060e2b34010201010d01030116010101:after { content:" - Sound Essence" }
+/* footer */
+#canvas div.uuid_060e2b34020501010d01020101040400:after { content:" - Partition Pack - Footer"}
+#canvas div.uuid_060e2b34025301010d01020101100100:after { content:" - Index Table Segment" }
+#canvas div.uuid_060e2b34020501010d01020101110100:after { content:" - Random Index Pack" }
+/* ---------- ARRIRaw MXF ----------- */
+/* ARRI_Metadata_White_Paper_ALEXA_LF_SXT_SUP2.0_Mini_AMIRA_SUP5.3_ALEXA65_SUP2.1 */
+#canvas div.uuid_060e2b340102010d0f01030101010100 { color:green; }
+#canvas div.uuid_060e2b340102010d0f01030101010100:after { content:" - ARRIRAW Image" }
+#canvas div.uuid_060e2b340205010d0e17000000a10101:after { content:" - ARRIRAW LUT" }
+#canvas div.uuid_060e2b340205010d0e17000000110101:after { content:" - ARRIRAW Metadata Block" }
+#canvas div.uuid_060e2b34024301010d01030104010302:after { content:" - ARRIRAW Dynamic Metadata" }
+
+#elements {
+    font-family: Courier;
+    color:white;
+    border:1px solid rgb(106, 90, 205);
+    background-color:rgb(106, 90, 205);
+    padding:5px;
 }
 </style>
 
-<div id="drop" ondragover="dragoverHandler(event)" ondrop="dropHandler(event)">
-    Drop your MXF here
+<div id="drop" ondragover="onDragOverHandler(event)" ondrop="onDropHandler(event)">
+    MXF Reader : Drag your MXF here
 </div>
+
+<div id="elements">0 elements found</div>
+<div id="canvas">
+</div>
+
 
 </body>
 </html>
