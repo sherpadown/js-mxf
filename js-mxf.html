@@ -55,6 +55,7 @@ document.addEventListener('interface', function (event) {
         canvas.appendChild(div);
         // Update elements number
         document.getElementById("elements").innerHTML = (++elements_number) + " elements found";
+        document.getElementById("progression").innerHTML = Math.ceil( (event.detail.offset * 100) / event.detail.fileSize ) + " %";
     }
 }, false);
 
@@ -95,7 +96,13 @@ function onDropHandler(event) {
 
         // Update interface
         document.dispatchEvent(
-            new CustomEvent("interface", { detail: { "action": "update", "uuid": uuid, "size": size } })
+            new CustomEvent("interface", { detail: {
+                "action": "update",
+                "uuid": uuid,
+                "size": size,
+                "offset": offset,
+                "fileSize": file.size
+            }})
         );
 
 
@@ -206,6 +213,7 @@ function onDragOverHandler(event) {
 #canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
 #canvas div.uuid_060e2b34010201010d01030116010101 { color:green; }
 #canvas div.uuid_060e2b34010201010d01030116010101:after { content:" - Sound Essence" }
+#canvas div.uuid_060e2b34010201010d01030116050301:after { content:" - Sound Essence *" }
 /* footer */
 #canvas div.uuid_060e2b34020501010d01020101040400:after { content:" - Partition Pack - Footer"}
 #canvas div.uuid_060e2b34025301010d01020101100100:after { content:" - Index Table Segment" }
@@ -218,7 +226,7 @@ function onDragOverHandler(event) {
 #canvas div.uuid_060e2b340205010d0e17000000110101:after { content:" - ARRIRAW Metadata Block" }
 #canvas div.uuid_060e2b34024301010d01030104010302:after { content:" - ARRIRAW Dynamic Metadata" }
 
-#elements {
+#elements, #progression {
     font-family: Courier;
     color:white;
     border:1px solid rgb(106, 90, 205);
@@ -232,6 +240,7 @@ function onDragOverHandler(event) {
 </div>
 
 <div id="elements">0 elements found</div>
+<div id="progression">0 %</div>
 <div id="canvas">
 </div>
 
