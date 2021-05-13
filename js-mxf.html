@@ -86,10 +86,10 @@ function onDropHandler(event) {
         uuid = getUUID(event.target.result.slice(0, 16));
         size = getSize(event.target.result.slice(16, 20));
         
-
-        if (!uuid) {
+        // End Of File
+        if ( offset >= file.size ) {
             console.log("EOF");
-            return;
+            return
         }
 
         console.log(uuid, "offset=", offset, "size=", size, "fsize=", size+20);
