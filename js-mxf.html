@@ -43,15 +43,18 @@ document.addEventListener('interface', function (event) {
         elements_number = 0;
         document.getElementById("elements").innerHTML = "0 elements found";
         document.getElementById("canvas").innerHTML = null;
+        document.getElementById("progression").innerHTML = "0 %";
+    } else if ( event.detail.action == "abort" ) {
+        document.getElementById("elements").innerHTML = event.detail.reason;
     } else {
         // Create a new div for new element
-        var div = document.createElement("div");
+        let div = document.createElement("div");
         div.setAttribute("id", "element_" + elements_number);
         div.setAttribute("class", "uuid_" + event.detail.uuid);
-        var content = document.createTextNode(event.detail.uuid + " - " + event.detail.size);
+        let content = document.createTextNode(event.detail.uuid + " - " + event.detail.size);
         div.appendChild(content);
         // Update canvas
-        var canvas = document.getElementById("canvas");
+        let canvas = document.getElementById("canvas");
         canvas.appendChild(div);
         // Update elements number
         document.getElementById("elements").innerHTML = (++elements_number) + " elements found";
@@ -74,8 +77,6 @@ function onDropHandler(event) {
     var file = files[0];
 
     var offset = 0;
-    var size = 20;
-
 
     var readDataHandler = function(event) {
         uuid = getUUID(event.target.result.slice(0, 16));
@@ -83,9 +84,20 @@ function onDropHandler(event) {
     }
 
     var readHeaderHandler = function(event) {
-        uuid = getUUID(event.target.result.slice(0, 16));
-        size = getSize(event.target.result.slice(16, 20));
+        let uuid = getUUID(event.target.result.slice(0, 16));
+        let size = getSize(event.target.result.slice(16, 20));
         
+        if (offset == 0 && to_hex(event.target.result.slice(0, 4)) != "060e2b34" ) {
+            console.log("Not A MXF File");
+            document.dispatchEvent(
+                new CustomEvent("interface", { detail: {
+                    "action": "abort",
+                    "reason": "Not A MXF File"
+                }})
+            );
+            return
+        }
+
         // End Of File
         if ( offset >= file.size ) {
             console.log("EOF");
@@ -105,7 +117,6 @@ function onDropHandler(event) {
             }})
         );
 
-
         // Read Data from KLV
         readData(file, offset, size);
         
@@ -116,14 +127,14 @@ function onDropHandler(event) {
 
 
     function readHeader(fileHandler, offset) {
-        var reader = new FileReader();
-        var chunk = fileHandler.slice(offset, offset + 20);
+        let reader = new FileReader();
+        let chunk = fileHandler.slice(offset, offset + 20);
         reader.onload = readHeaderHandler;
         reader.readAsArrayBuffer(chunk);
     }
     function readData(fileHandler, offset, size) {
-        var reader = new FileReader();
-        var chunk = fileHandler.slice(offset, offset + size);
+        let reader = new FileReader();
+        let chunk = fileHandler.slice(offset, offset + size);
         reader.onload = readDataHandler;
         reader.readAsArrayBuffer(chunk);
     }
