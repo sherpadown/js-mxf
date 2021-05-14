@@ -1,0 +1,2 @@
+Bugs:
+    - parser is buggy when we push a new file during a previous parsing (need abort)
