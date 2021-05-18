@@ -7,7 +7,7 @@
 <body>
 
 <script>
-var elements_number = 0;
+var elements_found = 0;
 
 function to_hex(buffer) {
     /* 
@@ -38,28 +38,42 @@ function getSize(buffer) {
     return size;
 }
 
-document.addEventListener('interface', function (event) {
-    if ( event.detail.action == "reset" ) {
-        elements_number = 0;
-        document.getElementById("elements").innerHTML = "0 elements found";
-        document.getElementById("canvas").innerHTML = null;
-        document.getElementById("progression").innerHTML = "0 %";
-    } else if ( event.detail.action == "abort" ) {
-        document.getElementById("elements").innerHTML = event.detail.reason;
-    } else {
-        // Create a new div for new element
-        let div = document.createElement("div");
-        div.setAttribute("id", "element_" + elements_number);
-        div.setAttribute("class", "uuid_" + event.detail.uuid);
-        let content = document.createTextNode(event.detail.uuid + " - " + event.detail.size);
-        div.appendChild(content);
-        // Update canvas
-        let canvas = document.getElementById("canvas");
-        canvas.appendChild(div);
-        // Update elements number
-        document.getElementById("elements").innerHTML = (++elements_number) + " elements found";
-        document.getElementById("progression").innerHTML = Math.ceil( (event.detail.offset * 100) / event.detail.fileSize ) + " %";
-    }
+document.addEventListener('interface', event => {
+    switch(event.detail.action) {
+            case 'reset':
+                    elements_found = 0;
+                    document.getElementById("progression").innerHTML = "0 %";
+                    document.getElementById("elements-found").innerHTML = "0 elements found";
+                    document.getElementById("elements-blocks").innerHTML = null;
+                    document.getElementById("elements-list").innerHTML = null;
+                break
+            case 'abort':
+                    document.getElementById("elements-found").innerHTML = event.detail.reason;
+                break
+            case 'update':
+                    // Create a new element
+                    div = document.createElement("div");
+                    div.setAttribute("id", event.detail.offset);
+                    div.setAttribute("class", "uuid_" + event.detail.uuid);
+                    div.setAttribute("data-offset", event.detail.offset);
+                    div.setAttribute("data-size", event.detail.size);
+                    div.appendChild(
+                        document.createTextNode(event.detail.uuid + " - " + event.detail.offset + " - " + event.detail.size)
+                    );
+                    // Add element into the list
+                    document.getElementById("elements-list").appendChild(div);
+
+                    /* Blocks */
+                    div = document.createElement("div");
+                    div.setAttribute("class", "uuid_" + event.detail.uuid);
+                    document.getElementById("elements-blocks").appendChild(div);
+
+                    // Update progression
+                    document.getElementById("progression").innerHTML = Math.ceil( (event.detail.offset * 100) / event.detail.fileSize ) + " %";
+                    document.getElementById("elements-found").innerHTML = (++elements_found) + " elements found";
+                break
+    } // switch
+
 }, false);
 
 
@@ -78,17 +92,17 @@ function onDropHandler(event) {
 
     var offset = 0;
 
-    var readDataHandler = function(event) {
+    var readDataHandler = event => {
         uuid = getUUID(event.target.result.slice(0, 16));
         console.log(uuid, "size=", event.target.result.byteLength);
     }
 
-    var readHeaderHandler = function(event) {
+    var readHeaderHandler = event => {
         let uuid = getUUID(event.target.result.slice(0, 16));
         let size = getSize(event.target.result.slice(16, 20));
         
+        // Not A MXF
         if (offset == 0 && to_hex(event.target.result.slice(0, 4)) != "060e2b34" ) {
-            console.log("Not A MXF File");
             document.dispatchEvent(
                 new CustomEvent("interface", { detail: {
                     "action": "abort",
@@ -129,12 +143,15 @@ function onDropHandler(event) {
     function readHeader(fileHandler, offset) {
         let reader = new FileReader();
         let chunk = fileHandler.slice(offset, offset + 20);
+        reader.offset = offset;
         reader.onload = readHeaderHandler;
         reader.readAsArrayBuffer(chunk);
     }
     function readData(fileHandler, offset, size) {
         let reader = new FileReader();
         let chunk = fileHandler.slice(offset, offset + size);
+        reader.offset = offset;
+        reader.size = size;
         reader.onload = readDataHandler;
         reader.readAsArrayBuffer(chunk);
     }
@@ -158,103 +175,122 @@ function onDragOverHandler(event) {
     background-color:rgba(106, 90, 205, 0.5);
     border:1px solid rgba(106, 90, 205, 1);
 }
-#canvas {
+#elements-list {
     font-family: Courier;
     padding:5px;
 }
 
 /* --------- JPEG2000 MXF ----------- */
-#canvas div.uuid_060e2b34010201010d01030115010801 { color:green; }
-#canvas div.uuid_060e2b34010201010d01030115010801:after { content:" - Picture Essence - JPEG2000 (LineWrapped, NotClipWrapped)"; }
-#canvas div.uuid_060e2b34020401070d010301027e0100 { color:green; }
-#canvas div.uuid_060e2b34020401070d010301027e0100:after { content:" - Encrypted Essence - Picture - JPEG2000" }
-#canvas div.uuid_060e2b34020401010d010301027e0100 { color:green; }
-#canvas div.uuid_060e2b34020401010d010301027e0100:after { content:" - Encrypted Essence" }
-#canvas div.uuid_060e2b34025301010d01010101015a00:after { content:" - PictureSubDescriptor - JPEG2000" }
-#canvas div.uuid_060e2b34025301010d01040102010000:after { content:" - Cryptographic Framework Key" }
-#canvas div.uuid_060e2b34025301010d01040102020000:after { content:" - Cryptographic Context Key" }
+#elements-list div.uuid_060e2b34010201010d01030115010801 { color:green; }
+#elements-list div.uuid_060e2b34010201010d01030115010801:after { content:" - Picture Essence - JPEG2000"; }
+#elements-list div.uuid_060e2b34020401070d010301027e0100 { color:green; }
+#elements-list div.uuid_060e2b34020401070d010301027e0100:after { content:" - Encrypted Essence - Picture - JPEG2000" }
+#elements-list div.uuid_060e2b34020401010d010301027e0100 { color:green; }
+#elements-list div.uuid_060e2b34020401010d010301027e0100:after { content:" - Encrypted Essence" }
+#elements-list div.uuid_060e2b34025301010d01010101015a00:after { content:" - PictureSubDescriptor - JPEG2000" }
+#elements-list div.uuid_060e2b34025301010d01040102010000:after { content:" - Cryptographic Framework Key" }
+#elements-list div.uuid_060e2b34025301010d01040102020000:after { content:" - Cryptographic Context Key" }
 /* ---------- MXF --------- */
-#canvas div.uuid_060e2b34020501010d01020101020400:after { content:" - Partition Pack - Header" }
-#canvas div.uuid_060e2b34020501010d01020101050100:after { content:" - Primer Pack" }
-#canvas div.uuid_060e2b34025301010d01010101012f00:after { content:" - Preface"}
-#canvas div.uuid_060e2b34025301010d01010101013000:after { content:" - Identification"}
-#canvas div.uuid_060e2b34025301010d01010101011800:after { content:" - Content Storage"}
-#canvas div.uuid_060e2b34025301010d01010101012300:after { content:" - Essence Container Data"}
-#canvas div.uuid_060e2b34025301010d01010101013600:after { content:" - Material Package"}
-#canvas div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
-#canvas div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
-#canvas div.uuid_060e2b34025301010d01010101011400:after { content:" - Timecode Component"}
-#canvas div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
-#canvas div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
-#canvas div.uuid_060e2b34025301010d01010101011100:after { content:" - Source Clip"}
-#canvas div.uuid_060e2b34025301010d01010101013700:after { content:" - Source Package"}
-#canvas div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
-#canvas div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
-#canvas div.uuid_060e2b34025301010d01010101011400:after { content:" - Timecode Component"}
-#canvas div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
-#canvas div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
-#canvas div.uuid_060e2b34025301010d01010101011100:after { content:" - Source Clip"}
-#canvas div.uuid_060e2b34025301010d01010101012900:after { content:" - RGBA Essence Descriptor" }
-#canvas div.uuid_060e2b34025301010d01010101013a00:after { content:" - Static Track"}
-#canvas div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
-#canvas div.uuid_060e2b34025301010d01010101014100:after { content:" - DM Segment"}
-#canvas div.uuid_060e2b34010101020301021001000000:after { content:" - KLV Fill item"}
-#canvas div.uuid_060e2b34010101010301021001000000:after { content:" - KLV Fill item"}
-#canvas div.uuid_060e2b34020501010d01020101030400:after { content:" - Partition Pack - Body"}
+#elements-list div.uuid_060e2b34020501010d01020101020400:after { content:" - Partition Pack - Header" }
+#elements-list div.uuid_060e2b34020501010d01020101050100:after { content:" - Primer Pack" }
+#elements-list div.uuid_060e2b34025301010d01010101012f00:after { content:" - Preface"}
+#elements-list div.uuid_060e2b34025301010d01010101013000:after { content:" - Identification"}
+#elements-list div.uuid_060e2b34025301010d01010101011800:after { content:" - Content Storage"}
+#elements-list div.uuid_060e2b34025301010d01010101012300:after { content:" - Essence Container Data"}
+#elements-list div.uuid_060e2b34025301010d01010101013600:after { content:" - Material Package"}
+#elements-list div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#elements-list div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#elements-list div.uuid_060e2b34025301010d01010101011400:after { content:" - Timecode Component"}
+#elements-list div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#elements-list div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#elements-list div.uuid_060e2b34025301010d01010101011100:after { content:" - Source Clip"}
+#elements-list div.uuid_060e2b34025301010d01010101013700:after { content:" - Source Package"}
+#elements-list div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#elements-list div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#elements-list div.uuid_060e2b34025301010d01010101011400:after { content:" - Timecode Component"}
+#elements-list div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#elements-list div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#elements-list div.uuid_060e2b34025301010d01010101011100:after { content:" - Source Clip"}
+#elements-list div.uuid_060e2b34025301010d01010101012900:after { content:" - RGBA Essence Descriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101013a00:after { content:" - Static Track"}
+#elements-list div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#elements-list div.uuid_060e2b34025301010d01010101014100:after { content:" - DM Segment"}
+#elements-list div.uuid_060e2b34010101020301021001000000:after { content:" - KLV Fill item"}
+#elements-list div.uuid_060e2b34010101010301021001000000:after { content:" - KLV Fill item"}
+#elements-list div.uuid_060e2b34020501010d01020101030400:after { content:" - Partition Pack - Body"}
 /* MXF Subtitles */
-#canvas div.uuid_060e2b340101010c0d01050901000000:after { content:" - Generic Stream Data Element - PNG"}
-#canvas div.uuid_060e2b34020501010d01020101031100:after { content:" - Partition Pack - Body - Generic Stream Partition"}
-#canvas div.uuid_060e2b34010201010d01030117010b01:after { content:" - Data Essence - XML"}
-#canvas div.uuid_060e2b34025301010d01010101016400:after { content:" - TimedTextDescriptor"}
-#canvas div.uuid_060e2b34025301010d01010101016500:after { content:" - TimedTextResourceSubDescriptor"}
-#canvas div.uuid_060e2b34025301010d01010101016500:after { content:" - TimedTextResourceSubDescriptor"}
-#canvas div.uuid_060e2b34010201090d01030117010b01 { color:green; }
-#canvas div.uuid_060e2b34010201090d01030117010b01:after { content:" - Timed Text Essence" }
+#elements-list div.uuid_060e2b340101010c0d01050901000000:after { content:" - Generic Stream Data Element - PNG"}
+#elements-list div.uuid_060e2b34020501010d01020101031100:after { content:" - Partition Pack - Body - Generic Stream Partition"}
+#elements-list div.uuid_060e2b34010201010d01030117010b01:after { content:" - Data Essence - XML"}
+#elements-list div.uuid_060e2b34025301010d01010101016400:after { content:" - TimedTextDescriptor"}
+#elements-list div.uuid_060e2b34025301010d01010101016500:after { content:" - TimedTextResourceSubDescriptor"}
+#elements-list div.uuid_060e2b34025301010d01010101016500:after { content:" - TimedTextResourceSubDescriptor"}
+#elements-list div.uuid_060e2b34010201090d01030117010b01 { color:green; }
+#elements-list div.uuid_060e2b34010201090d01030117010b01:after { content:" - Timed Text Essence" }
 /* Sound */
-#canvas div.uuid_060e2b34025301010d01010101014800:after { content:" - WaveAudioDescriptor **" }
-#canvas div.uuid_060e2b34025301010d01010101016c00:after { content:" - SoundfieldGroupLabelSubDescriptor" }
-#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
-#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
-#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
-#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
-#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
-#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
-#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
-#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
-#canvas div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
-#canvas div.uuid_060e2b34010201010d01030116010101 { color:green; }
-#canvas div.uuid_060e2b34010201010d01030116010101:after { content:" - Sound Essence" }
-#canvas div.uuid_060e2b34010201010d01030116050301:after { content:" - Sound Essence *" }
+#elements-list div.uuid_060e2b34025301010d01010101014800:after { content:" - WaveAudioDescriptor **" }
+#elements-list div.uuid_060e2b34025301010d01010101016c00:after { content:" - SoundfieldGroupLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34010201010d01030116010101 { color:green; }
+#elements-list div.uuid_060e2b34010201010d01030116010101:after { content:" - Sound Essence" }
+#elements-list div.uuid_060e2b34010201010d01030116050301 { color:green; }
+#elements-list div.uuid_060e2b34010201010d01030116050301:after { content:" - Sound Essence *" }
 /* footer */
-#canvas div.uuid_060e2b34020501010d01020101040400:after { content:" - Partition Pack - Footer"}
-#canvas div.uuid_060e2b34025301010d01020101100100:after { content:" - Index Table Segment" }
-#canvas div.uuid_060e2b34020501010d01020101110100:after { content:" - Random Index Pack" }
+#elements-list div.uuid_060e2b34020501010d01020101040400:after { content:" - Partition Pack - Footer"}
+#elements-list div.uuid_060e2b34025301010d01020101100100:after { content:" - Index Table Segment" }
+#elements-list div.uuid_060e2b34020501010d01020101110100:after { content:" - Random Index Pack" }
 /* ---------- ARRIRaw MXF ----------- */
 /* ARRI_Metadata_White_Paper_ALEXA_LF_SXT_SUP2.0_Mini_AMIRA_SUP5.3_ALEXA65_SUP2.1 */
-#canvas div.uuid_060e2b340102010d0f01030101010100 { color:green; }
-#canvas div.uuid_060e2b340102010d0f01030101010100:after { content:" - ARRIRAW Image" }
-#canvas div.uuid_060e2b340205010d0e17000000a10101:after { content:" - ARRIRAW LUT" }
-#canvas div.uuid_060e2b340205010d0e17000000110101:after { content:" - ARRIRAW Metadata Block" }
-#canvas div.uuid_060e2b34024301010d01030104010302:after { content:" - ARRIRAW Dynamic Metadata" }
+#elements-list div.uuid_060e2b340102010d0f01030101010100 { color:green; }
+#elements-list div.uuid_060e2b340102010d0f01030101010100:after { content:" - ARRIRAW Image" }
+#elements-list div.uuid_060e2b340205010d0e17000000a10101:after { content:" - ARRIRAW LUT" }
+#elements-list div.uuid_060e2b340205010d0e17000000110101:after { content:" - ARRIRAW Metadata Block" }
+#elements-list div.uuid_060e2b34024301010d01030104010302:after { content:" - ARRIRAW Dynamic Metadata" }
 
-#elements, #progression {
+#elements-found, #progression {
     font-family: Courier;
     color:white;
     border:1px solid rgb(106, 90, 205);
     background-color:rgb(106, 90, 205);
     padding:5px;
 }
+#elements-blocks {
+    min-height:20px;
+    border:1px solid rgb(106, 90, 205);
+}
+#elements-blocks div {
+    display: inline-block;
+    min-height:20px;
+    min-width:5px;
+    border-right:1px solid white;
+    /* border:1px dotted rgba(0, 0, 0, 0.2); */
+    background-color:rgba(0, 0, 0, 0.2);
+}
+#elements-blocks div.uuid_060e2b34010201010d01030115010801 { background-color:rgba(0, 255, 0, 1); }     /* Picture Essence - JPEG2000 */
+#elements-blocks div.uuid_060e2b34020401070d010301027e0100 { background-color:rgba(0, 255, 0, 0.5); }   /* Encrypted Essence - Picture - JPEG2000 */
+#elements-blocks div.uuid_060e2b34020401010d010301027e0100 { background-color:rgba(0, 255, 0, 0.2); }   /* Encrypted Essence */
+#elements-blocks div.uuid_060e2b34010201010d01030116010101 { background-color:rgba(0, 0, 255, 1); }     /* Sound Essence */
+#elements-blocks div.uuid_060e2b34010201010d01030116050301 { background-color:rgba(0, 0, 255, 1); }     /* Sound Essence */
+/* Arriraw */
+#elements-blocks div.uuid_060e2b340102010d0f01030101010100 { background-color:rgba(0, 255, 0, 1); } /* ARRIRAW Image */
 </style>
 
 <div id="drop" ondragover="onDragOverHandler(event)" ondrop="onDropHandler(event)">
     MXF Reader : Drag your MXF here
 </div>
 
-<div id="elements">0 elements found</div>
+<div id="elements-found">0 elements found</div>
 <div id="progression">0 %</div>
-<div id="canvas">
-</div>
-
+<div id="elements-blocks"></div>
+<div id="elements-list"></div>
 
 </body>
 </html>
