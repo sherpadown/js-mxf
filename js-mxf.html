@@ -7,6 +7,7 @@
 <body>
 
 <script>
+var debug = false;
 var elements_found = 0;
 
 function to_hex(buffer) {
@@ -39,6 +40,15 @@ function getSize(buffer) {
 }
 
 
+window.addEventListener("DOMContentLoaded", (event) => {
+    // Click-click-click on an Element (KLV)
+    document.querySelector('div#elements-list').addEventListener('click', (event) => {
+        if( event.target.matches("div.element") ) {
+            console.log(event.target);
+        }
+    });
+});
+
 document.addEventListener('interface', event => {
 
     switch(event.detail.action) {
@@ -59,7 +69,7 @@ document.addEventListener('interface', event => {
                     // Create a new element
                     div = document.createElement("div");
                     div.setAttribute("id", event.detail.offset);
-                    div.setAttribute("class", "uuid_" + event.detail.uuid);
+                    div.setAttribute("class", "element uuid_" + event.detail.uuid);
                     div.setAttribute("data-offset", event.detail.offset);
                     div.setAttribute("data-size", event.detail.size);
                     div.appendChild(
@@ -97,10 +107,13 @@ function onDropHandler(event) {
     var file = files[0];
 
     var offset = 0;
+    var header_length = 20;
 
     var readDataHandler = function(event) {
         uuid = getUUID(event.target.result.slice(0, 16));
-        console.log(uuid, "size=", event.target.result.byteLength);
+        if ( debug ) {
+            console.log(uuid, "size=", event.target.result.byteLength);
+        }
     }
 
     var readHeaderHandler = function(event) {
@@ -120,11 +133,15 @@ function onDropHandler(event) {
 
         // End Of File
         if ( offset >= file.size ) {
-            console.log("EOF");
+            if ( debug ) {
+                console.log("EOF");
+            }
             return
         }
 
-        console.log(uuid, "offset=", offset, "size=", size, "fsize=", size+20);
+        if ( debug ) {
+            console.log(uuid, "offset=", offset, "size=", size, "fsize=", header_length+size);
+        }
 
         // Update interface
         document.dispatchEvent(
@@ -141,13 +158,13 @@ function onDropHandler(event) {
         readData(file, offset, size);
         
         // Read the next KLV
-        offset += (size+20);
+        offset += ( header_length + size );
         readHeader(file, offset);
     }
 
     function readHeader(fileHandler, offset) {
         let reader = new FileReader();
-        let chunk = fileHandler.slice(offset, offset + 20);
+        let chunk = fileHandler.slice(offset, offset + header_length);
         reader.offset = offset;
         reader.onload = readHeaderHandler;
         reader.readAsArrayBuffer(chunk);
@@ -173,6 +190,14 @@ function onDragOverHandler(event) {
 </script>
 
 <style>
+#header {
+    position: fixed;
+    height:150px;
+    width:98%;
+}
+#content {
+    margin-top:110px;
+}
 #drop {
     height:50px;
     padding:5px;
@@ -291,16 +316,23 @@ function onDragOverHandler(event) {
 #elements-blocks div.uuid_060e2b34010201010d01030116050301 { background-color:rgba(0, 0, 255, 1); }     /* Sound Essence */
 /* Arriraw */
 #elements-blocks div.uuid_060e2b340102010d0f01030101010100 { background-color:rgba(0, 255, 0, 1); } /* ARRIRAW Image */
+
 </style>
 
-<div id="drop" ondragover="onDragOverHandler(event)" ondrop="onDropHandler(event)">
-    MXF Reader : Drag your MXF here
+<div id="header">
+    <div id="drop" ondragover="onDragOverHandler(event)" ondrop="onDropHandler(event)">
+        Drag your MXF here
+    </div>
+    <div id="elements-found">0 elements found</div>
+    <div id="progression">0 %</div>
 </div>
 
-<div id="elements-found">0 elements found</div>
-<div id="progression">0 %</div>
-<div id="elements-blocks"></div>
-<div id="elements-list"></div>
+<br clear="all"/>
+
+<div id="content">
+    <div id="elements-blocks"></div>
+    <div id="elements-list"></div>
+</div>
 
 </body>
 </html>
