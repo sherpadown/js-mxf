@@ -38,8 +38,11 @@ function getSize(buffer) {
     return size;
 }
 
+
 document.addEventListener('interface', event => {
+
     switch(event.detail.action) {
+
             case 'reset':
                     elements_found = 0;
                     document.getElementById("progression").innerHTML = "0 %";
@@ -47,9 +50,11 @@ document.addEventListener('interface', event => {
                     document.getElementById("elements-blocks").innerHTML = null;
                     document.getElementById("elements-list").innerHTML = null;
                 break
+
             case 'abort':
                     document.getElementById("elements-found").innerHTML = event.detail.reason;
                 break
+
             case 'update':
                     // Create a new element
                     div = document.createElement("div");
@@ -72,6 +77,7 @@ document.addEventListener('interface', event => {
                     document.getElementById("progression").innerHTML = Math.ceil( (event.detail.offset * 100) / event.detail.fileSize ) + " %";
                     document.getElementById("elements-found").innerHTML = (++elements_found) + " elements found";
                 break
+
     } // switch
 
 }, false);
@@ -92,12 +98,12 @@ function onDropHandler(event) {
 
     var offset = 0;
 
-    var readDataHandler = event => {
+    var readDataHandler = function(event) {
         uuid = getUUID(event.target.result.slice(0, 16));
         console.log(uuid, "size=", event.target.result.byteLength);
     }
 
-    var readHeaderHandler = event => {
+    var readHeaderHandler = function(event) {
         let uuid = getUUID(event.target.result.slice(0, 16));
         let size = getSize(event.target.result.slice(16, 20));
         
@@ -138,7 +144,6 @@ function onDropHandler(event) {
         offset += (size+20);
         readHeader(file, offset);
     }
-
 
     function readHeader(fileHandler, offset) {
         let reader = new FileReader();
@@ -263,12 +268,17 @@ function onDragOverHandler(event) {
     padding:5px;
 }
 #elements-blocks {
+    padding:0px;
+    padding-left:5px;
+    padding-right:5px;
     min-height:20px;
     border:1px solid rgb(106, 90, 205);
 }
 #elements-blocks div {
+    padding:0px;
+    margin:0px;
     display: inline-block;
-    min-height:20px;
+    min-height:10px;
     min-width:5px;
     border-right:1px solid white;
     /* border:1px dotted rgba(0, 0, 0, 0.2); */
