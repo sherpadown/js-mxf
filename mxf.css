@@ -1,0 +1,155 @@
+#header {
+    position: fixed;
+    height:150px;
+    width:99%;
+    background-color:rgba(255, 255, 255, 0.8);
+}
+#content {
+    margin-top:180px;
+    background-color:rgba(255, 255, 255, 0.8);
+}
+#drop {
+    height:50px;
+    padding:20px;
+    font-family: Verdana;
+    font-size:40px;
+    font-weight:bold;
+    text-align:center;
+    background-color:rgba(106, 90, 205, 0.5);
+    border:5px dotted white;
+    margin-bottom:5px;
+    color:white;
+    text-transform:uppercase;
+    border-radius:10px;
+    box-shadow: 5px 0px 5px rgba(100, 100, 100, 0.5);
+}
+#elements-list {
+    font-family: Courier;
+    padding:5px;
+}
+
+/* --------- JPEG2000 MXF ----------- */
+#elements-list div.uuid_060e2b34010201010d01030115010801 { color:green; }
+#elements-list div.uuid_060e2b34010201010d01030115010801:after { content:" - Picture Essence - JPEG2000"; }
+#elements-list div.uuid_060e2b34020401070d010301027e0100 { color:green; }
+#elements-list div.uuid_060e2b34020401070d010301027e0100:after { content:" - Encrypted Essence - Picture - JPEG2000" }
+#elements-list div.uuid_060e2b34020401010d010301027e0100 { color:green; }
+#elements-list div.uuid_060e2b34020401010d010301027e0100:after { content:" - Encrypted Essence" }
+#elements-list div.uuid_060e2b34025301010d01010101015a00:after { content:" - PictureSubDescriptor - JPEG2000" }
+#elements-list div.uuid_060e2b34025301010d01040102010000:after { content:" - Cryptographic Framework Key" }
+#elements-list div.uuid_060e2b34025301010d01040102020000:after { content:" - Cryptographic Context Key" }
+/* ---------- MXF --------- */
+#elements-list div.uuid_060e2b34020501010d01020101020400:after { content:" - Partition Pack - Header" }
+#elements-list div.uuid_060e2b34020501010d01020101050100:after { content:" - Primer Pack" }
+#elements-list div.uuid_060e2b34025301010d01010101012f00:after { content:" - Preface"}
+#elements-list div.uuid_060e2b34025301010d01010101013000:after { content:" - Identification"}
+#elements-list div.uuid_060e2b34025301010d01010101011800:after { content:" - Content Storage"}
+#elements-list div.uuid_060e2b34025301010d01010101012300:after { content:" - Essence Container Data"}
+#elements-list div.uuid_060e2b34025301010d01010101013600:after { content:" - Material Package"}
+#elements-list div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#elements-list div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#elements-list div.uuid_060e2b34025301010d01010101011400:after { content:" - Timecode Component"}
+#elements-list div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#elements-list div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#elements-list div.uuid_060e2b34025301010d01010101011100:after { content:" - Source Clip"}
+#elements-list div.uuid_060e2b34025301010d01010101013700:after { content:" - Source Package"}
+#elements-list div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#elements-list div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#elements-list div.uuid_060e2b34025301010d01010101011400:after { content:" - Timecode Component"}
+#elements-list div.uuid_060e2b34025301010d01010101013b00:after { content:" - Timeline Track"}
+#elements-list div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#elements-list div.uuid_060e2b34025301010d01010101011100:after { content:" - Source Clip"}
+#elements-list div.uuid_060e2b34025301010d01010101012900:after { content:" - RGBA Essence Descriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101013a00:after { content:" - Static Track"}
+#elements-list div.uuid_060e2b34025301010d01010101010f00:after { content:" - Sequence"}
+#elements-list div.uuid_060e2b34025301010d01010101014100:after { content:" - DM Segment"}
+#elements-list div.uuid_060e2b34010101020301021001000000:after { content:" - KLV Fill item"}
+#elements-list div.uuid_060e2b34010101010301021001000000:after { content:" - KLV Fill item"}
+#elements-list div.uuid_060e2b34020501010d01020101030400:after { content:" - Partition Pack - Body"}
+/* MXF Subtitles */
+#elements-list div.uuid_060e2b340101010c0d01050901000000:after { content:" - Generic Stream Data Element - PNG"}
+#elements-list div.uuid_060e2b34020501010d01020101031100:after { content:" - Partition Pack - Body - Generic Stream Partition"}
+#elements-list div.uuid_060e2b34010201010d01030117010b01:after { content:" - Data Essence - XML"}
+#elements-list div.uuid_060e2b34025301010d01010101016400:after { content:" - TimedTextDescriptor"}
+#elements-list div.uuid_060e2b34025301010d01010101016500:after { content:" - TimedTextResourceSubDescriptor"}
+#elements-list div.uuid_060e2b34025301010d01010101016500:after { content:" - TimedTextResourceSubDescriptor"}
+#elements-list div.uuid_060e2b34010201090d01030117010b01 { color:green; }
+#elements-list div.uuid_060e2b34010201090d01030117010b01:after { content:" - Timed Text Essence" }
+/* Sound */
+#elements-list div.uuid_060e2b34025301010d01010101014800:after { content:" - WaveAudioDescriptor **" }
+#elements-list div.uuid_060e2b34025301010d01010101016c00:after { content:" - SoundfieldGroupLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34025301010d01010101016b00:after { content:" - AudioChannelLabelSubDescriptor" }
+#elements-list div.uuid_060e2b34010201010d01030116010101 { color:green; }
+#elements-list div.uuid_060e2b34010201010d01030116010101:after { content:" - Sound Essence" }
+#elements-list div.uuid_060e2b34010201010d01030116050301 { color:green; }
+#elements-list div.uuid_060e2b34010201010d01030116050301:after { content:" - Sound Essence *" }
+#elements-list div.uuid_060e2b34010201010d01030116010100 { color:green; }
+#elements-list div.uuid_060e2b34010201010d01030116010100:after { content:" - Sound Essence" }
+/* footer */
+#elements-list div.uuid_060e2b34020501010d01020101040400:after { content:" - Partition Pack - Footer"}
+#elements-list div.uuid_060e2b34025301010d01020101100100:after { content:" - Index Table Segment" }
+#elements-list div.uuid_060e2b34020501010d01020101110100:after { content:" - Random Index Pack" }
+/* ---------- ARRIRaw MXF ----------- */
+/* ARRI_Metadata_White_Paper_ALEXA_LF_SXT_SUP2.0_Mini_AMIRA_SUP5.3_ALEXA65_SUP2.1 */
+#elements-list div.uuid_060e2b340102010d0f01030101010100 { color:green; }
+#elements-list div.uuid_060e2b340102010d0f01030101010100:after { content:" - ARRIRAW Image" }
+#elements-list div.uuid_060e2b340205010d0e17000000a10101:after { content:" - ARRIRAW LUT" }
+#elements-list div.uuid_060e2b340205010d0e17000000110101:after { content:" - ARRIRAW Metadata Block" }
+#elements-list div.uuid_060e2b34024301010d01030104010302:after { content:" - ARRIRAW Dynamic Metadata" }
+
+#elements-found, #progression {
+    font-family: Verdana;
+    color:black;
+    border:1px solid rgba(10, 10, 10, 0.2);
+    background-color:rgba(225, 225, 225);
+    padding:5px;
+}
+#informations {
+    padding:0px;
+    padding-left:5px;
+    padding-right:5px;
+    min-height:20px;
+    border:1px solid rgba(10, 10, 10, 0.2);
+    background-color:rgba(225, 225, 225);
+    font-family: Verdana;
+    color:rgba(100, 100, 100, 0.7);
+    border-top:none;
+    border-bottom:none;
+}
+#elements-blocks {
+    padding:0px;
+    padding-left:5px;
+    padding-right:5px;
+    min-height:20px;
+    border:1px solid rgba(10, 10, 10, 0.2);
+    background-color:rgba(255, 255, 255, 0.9);
+    box-shadow: 0px 0px 5px rgba(100, 100, 100, 0.5);
+    margin-top:6px;
+    margin-bottom:6px;
+}
+#elements-blocks div {
+    padding:0px;
+    margin:0px;
+    display: inline-block;
+    min-height:10px;
+    min-width:5px;
+    border-right:1px solid white;
+    /* border:1px dotted rgba(0, 0, 0, 0.2); */
+    background-color:rgba(0, 0, 0, 0.2);
+}
+#elements-blocks div.uuid_060e2b34010201010d01030115010801 { background-color:rgba(0, 255, 0, 1); }     /* Picture Essence - JPEG2000 */
+#elements-blocks div.uuid_060e2b34020401070d010301027e0100 { background-color:rgba(0, 255, 0, 0.5); }   /* Encrypted Essence - Picture - JPEG2000 */
+#elements-blocks div.uuid_060e2b34020401010d010301027e0100 { background-color:rgba(0, 255, 0, 0.2); }   /* Encrypted Essence */
+#elements-blocks div.uuid_060e2b34010201010d01030116010101 { background-color:rgba(0, 0, 255, 1); }     /* Sound Essence */
+#elements-blocks div.uuid_060e2b34010201010d01030116050301 { background-color:rgba(0, 0, 255, 1); }     /* Sound Essence */
+#elements-blocks div.uuid_060e2b34010201010d01030116010100 { background-color:rgba(0, 0, 255, 1); }     /* Sound Essence */
+/* Arriraw */
+#elements-blocks div.uuid_060e2b340102010d0f01030101010100 { background-color:rgba(0, 255, 0, 1); } /* ARRIRAW Image */

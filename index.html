@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og: https://ogp.me/ns#">
+    <head>
+        <meta charset="utf-8"/>
+        <title>MXF Reader</title>
+    </head>
+	<body>
+
+		<script type="text/javascript" src="mxf.js"></script>
+		<link rel="stylesheet" href="mxf.css"/>
+
+		<div id="header">
+			<div id="drop" ondragover="onDragOverHandler(event)" ondrop="onDropHandler(event)">
+				Drag your MXF here
+			</div>
+			<div id="elements-found">0 elements found</div>
+			<div id="informations"></div>
+			<div id="progression">0 %</div>
+		</div>
+
+		<br clear="all"/>
+
+		<div id="content">
+			<div id="elements-blocks"></div>
+			<div id="elements-list"></div>
+		</div>
+
+	</body>
+</html>
